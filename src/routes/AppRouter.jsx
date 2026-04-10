@@ -7,6 +7,7 @@ import Attendance from "../pages/Attendance";
 import Reports from "../pages/Reports";
 import Courses from "../pages/Courses";
 import Sessions from "../pages/Sessions";
+import Students from "../pages/Students";
 
 function AppRouter() {
   return (
@@ -55,6 +56,15 @@ function AppRouter() {
             element={
               <ProtectedRoute>
                 <Sessions />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/students"
+            element={
+              <ProtectedRoute>
+                <Students />
               </ProtectedRoute>
             }
           />

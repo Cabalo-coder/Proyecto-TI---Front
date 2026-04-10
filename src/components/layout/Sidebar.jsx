@@ -35,6 +35,10 @@ function Sidebar() {
         Sesiones
       </p>
 
+      <p style={{ cursor: "pointer" }} onClick={() => navigate("/students")}>
+        Estudiantes
+      </p>
+
     </div>
   );
 }
