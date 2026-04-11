@@ -1,19 +1,48 @@
+import { Box, Drawer } from "@mui/material";
+import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
 function DashboardLayout({ children }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
+    <Box className="page-shell" sx={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      <Box sx={{ display: { xs: "none", md: "block" }, flexShrink: 0 }}>
+        <Sidebar />
+      </Box>
 
-      <div style={{ flex: 1 }}>
-        <Navbar />
+      <Drawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        variant="temporary"
+        ModalProps={{ keepMounted: true }}
+        sx={{ display: { xs: "block", md: "none" } }}
+        PaperProps={{ sx: { width: 260, backgroundColor: "transparent" } }}
+      >
+        <Sidebar mobile onClose={() => setMobileOpen(false)} />
+      </Drawer>
 
-        <div style={{ padding: "20px" }}>
-          {children}
-        </div>
-      </div>
-    </div>
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <Navbar onMenuClick={() => setMobileOpen(true)} />
+
+        <Box sx={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+          <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }}>
+            {children}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 

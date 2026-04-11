@@ -1,68 +1,36 @@
-const API_URL = "http://127.0.0.1:8000";
+import { apiRequest, getToken } from "./api";
 
 // RECONOCER ROSTRO (GENERAL)
 
 export const recognizeFace = async (descriptor) => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}/recognition/`, {
+  return apiRequest("/recognition/", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ descriptor }),
+    token: getToken(),
+    body: { descriptor },
   });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.detail || "Error en reconocimiento");
-
-  return data;
 };
 
 
 // MARCAR ASISTENCIA (INDIVIDUAL)
 
 export const recognizeAttendance = async (descriptor) => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}/attendance/recognize`, {
+  return apiRequest("/attendance/recognize", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ descriptor }),
+    token: getToken(),
+    body: { descriptor },
   });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.detail || "Error en asistencia");
-
-  return data;
 };
 
 
 // ASISTENCIA GRUPAL (IMAGEN)
 
 export const recognizeGroup = async (file) => {
-  const token = localStorage.getItem("token");
-
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_URL}/group/recognize`, {
+  return apiRequest("/group/recognize", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`, 
-    },
+    token: getToken(),
     body: formData,
   });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.detail || "Error en reconocimiento grupal");
-
-  return data;
 };

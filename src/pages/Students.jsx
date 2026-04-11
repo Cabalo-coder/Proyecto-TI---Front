@@ -6,6 +6,22 @@ import {
   getSections,
 } from "../services/studentService";
 import { uploadFace } from "../services/faceService";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 
 function Students() {
   const [sections, setSections] = useState([]);
@@ -17,6 +33,8 @@ function Students() {
 
   const [file, setFile] = useState(null);
   const [useCamera, setUseCamera] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const webcamRef = useRef(null);
 
@@ -47,14 +65,16 @@ function Students() {
   // CREAR ESTUDIANTE + SUBIR ROSTRO
   const handleCreateStudent = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
 
     if (!sectionId) {
-      alert("Selecciona una sección");
+      setError("Selecciona una sección");
       return;
     }
 
     if (!file) {
-      alert("Debes subir o tomar una foto");
+      setError("Debes subir o tomar una foto");
       return;
     }
 
@@ -72,14 +92,14 @@ function Students() {
       const studentId = newStudent.student_id;
 
       if (!studentId) {
-        alert("Error obteniendo ID del estudiante");
+        setError("Error obteniendo ID del estudiante");
         return;
       }
 
       // 🔹 2. Subir rostro automáticamente
       await uploadFace(studentId, file);
 
-      alert("Estudiante + rostro registrados");
+      setSuccess("Estudiante y rostro registrados correctamente");
 
       // limpiar
       setFirstName("");
@@ -89,93 +109,153 @@ function Students() {
       setFile(null);
     } catch (error) {
       console.error(error);
-      alert("Error al registrar estudiante");
+      setError("Error al registrar estudiante");
     }
   };
 
   return (
     <DashboardLayout>
-      <h1>Estudiantes</h1>
+      <Box sx={{ display: "grid", gap: 3, maxWidth: 1200, mx: "auto" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Estudiantes
+          </Typography>
+          <Typography color="text.secondary">
+            Registra alumnos y captura su rostro con una interfaz más clara.
+          </Typography>
+        </Box>
 
-      {/* CREAR + ROSTRO */}
-      <form onSubmit={handleCreateStudent}>
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
+        {error ? <Alert severity="error">{error}</Alert> : null}
+        {success ? <Alert severity="success">{success}</Alert> : null}
 
-        <input
-          type="text"
-          placeholder="Apellido"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
+        <Card className="glass-surface lift-on-hover animate-fade-up">
+          <CardContent>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+              <PersonAddAltIcon color="primary" />
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Crear estudiante
+              </Typography>
+            </Stack>
 
-        <input
-          type="text"
-          placeholder="Carné"
-          value={carne}
-          onChange={(e) => setCarne(e.target.value)}
-        />
+            <Box component="form" onSubmit={handleCreateStudent} sx={{ display: "grid", gap: 2 }}>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField
+                  label="Nombre"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  label="Apellido"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  fullWidth
+                />
+              </Stack>
 
-        <select
-          value={sectionId}
-          onChange={(e) => setSectionId(e.target.value)}
-        >
-          <option value="">Selecciona una sección</option>
-          {sections.map((s) => (
-            <option key={s.section_id} value={s.section_id}>
-              Sección {s.section_name} ({s.course_name})
-            </option>
-          ))}
-        </select>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField
+                  label="Carné"
+                  value={carne}
+                  onChange={(e) => setCarne(e.target.value)}
+                  fullWidth
+                />
 
-        <br /><br />
+                <TextField
+                  select
+                  label="Sección"
+                  value={sectionId}
+                  onChange={(e) => setSectionId(e.target.value)}
+                  fullWidth
+                >
+                  <MenuItem value="">Selecciona una sección</MenuItem>
+                  {sections.map((s) => (
+                    <MenuItem key={s.section_id} value={s.section_id}>
+                      Sección {s.section_name} ({s.course_name})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
 
-        {/* elegir modo */}
-        <button type="button" onClick={() => setUseCamera(false)}>
-          Subir Imagen
-        </button>
+              <Divider sx={{ my: 1 }} />
 
-        <button type="button" onClick={() => setUseCamera(true)}>
-          Usar Cámara
-        </button>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                <Button
+                  type="button"
+                  variant={!useCamera ? "contained" : "outlined"}
+                  startIcon={<UploadFileIcon />}
+                  onClick={() => setUseCamera(false)}
+                  sx={{ flex: 1 }}
+                >
+                  Subir imagen
+                </Button>
+                <Button
+                  type="button"
+                  variant={useCamera ? "contained" : "outlined"}
+                  color="secondary"
+                  startIcon={<CameraAltIcon />}
+                  onClick={() => setUseCamera(true)}
+                  sx={{ flex: 1 }}
+                >
+                  Usar cámara
+                </Button>
+              </Stack>
 
-        <br /><br />
+              {!useCamera && (
+                <Button
+                  component="label"
+                  variant="outlined"
+                  startIcon={<UploadFileIcon />}
+                  sx={{ justifyContent: "center", py: 1.4 }}
+                >
+                  Seleccionar foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => setFile(e.target.files[0])}
+                  />
+                </Button>
+              )}
 
-        {/* subir archivo */}
-        {!useCamera && (
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-        )}
+              {useCamera && (
+                <Stack spacing={2} alignItems="center">
+                  <Box
+                    sx={{
+                      width: "100%",
+                      maxWidth: 360,
+                      overflow: "hidden",
+                      borderRadius: 4,
+                      boxShadow: "0 16px 34px rgba(41,50,65,0.16)",
+                    }}
+                  >
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      width="100%"
+                      style={{ display: "block", width: "100%" }}
+                    />
+                  </Box>
 
-        {/* 📷 cámara */}
-        {useCamera && (
-          <div>
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              width={300}
-            />
+                  <Button
+                    type="button"
+                    onClick={capturePhoto}
+                    variant="contained"
+                    startIcon={<PhotoCameraIcon />}
+                  >
+                    Tomar foto
+                  </Button>
+                </Stack>
+              )}
 
-            <button type="button" onClick={capturePhoto}>
-              Tomar Foto
-            </button>
-          </div>
-        )}
-
-        <br /><br />
-
-        <button type="submit">
-          Crear Estudiante + Registrar Rostro
-        </button>
-      </form>
+              <Button type="submit" variant="contained" color="secondary" size="large">
+                Crear estudiante y registrar rostro
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </DashboardLayout>
   );
 }

@@ -1,38 +1,23 @@
-const API_URL = "http://127.0.0.1:8000";
-
-const getToken = () => localStorage.getItem("token");
+import { apiRequest, getToken } from "./api";
 
 // Crear sesión
 export const createSession = async (data) => {
-  const res = await fetch(`${API_URL}/sessions/`, {
+  return apiRequest("/sessions/", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify(data),
+    token: getToken(),
+    body: data,
   });
-
-  return res.json();
 };
 
 // Obtener sesiones por curso
 export const getSessionsByCourse = async (course_id) => {
-  const res = await fetch(`${API_URL}/sessions/course/${course_id}`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+  return apiRequest(`/sessions/course/${course_id}`, {
+    token: getToken(),
   });
-
-  return res.json();
 };
 
 export const getAllSessions = async () => {
-  const res = await fetch("http://127.0.0.1:8000/sessions/", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
+  return apiRequest("/sessions/", {
+    token: getToken(),
   });
-
-  return res.json();
 };

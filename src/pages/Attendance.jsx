@@ -3,6 +3,22 @@ import Webcam from "react-webcam";
 import * as faceapi from "face-api.js";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import { recognizeAttendance, recognizeGroup } from "../services/recognitionService";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Divider,
+  Stack,
+  Typography,
+} from "@mui/material";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import GroupsIcon from "@mui/icons-material/Groups";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 function Attendance() {
   const webcamRef = useRef(null);
@@ -141,51 +157,159 @@ function Attendance() {
 
   return (
     <DashboardLayout>
-      <h1>Asistencia Inteligente</h1>
+      <Box sx={{ display: "grid", gap: 3, maxWidth: 1100, mx: "auto" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Asistencia inteligente
+          </Typography>
+          <Typography color="text.secondary">
+            Elige el modo de captura y marca asistencia con un flujo más claro.
+          </Typography>
+        </Box>
 
-      {/* SELECTOR */}
-      <div>
-        <button onClick={() => setMode("live")}>📹 En Vivo</button>
-        <button onClick={() => setMode("single")}>📸 Individual</button>
-        <button onClick={() => setMode("group")}>🧑‍🤝‍🧑 Grupal</button>
-      </div>
+        <Card className="glass-surface lift-on-hover animate-fade-up">
+          <CardContent>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
+              justifyContent="center"
+              alignItems="center"
+              sx={{ flexWrap: "wrap" }}
+            >
+              <Button
+                variant={mode === "live" ? "contained" : "outlined"}
+                startIcon={<VideocamIcon />}
+                onClick={() => setMode("live")}
+                sx={{ minWidth: 160 }}
+              >
+                En vivo
+              </Button>
+              <Button
+                variant={mode === "single" ? "contained" : "outlined"}
+                color="secondary"
+                startIcon={<PhotoCameraIcon />}
+                onClick={() => setMode("single")}
+                sx={{ minWidth: 160 }}
+              >
+                Individual
+              </Button>
+              <Button
+                variant={mode === "group" ? "contained" : "outlined"}
+                color="inherit"
+                startIcon={<GroupsIcon />}
+                onClick={() => setMode("group")}
+                sx={{
+                  minWidth: 160,
+                  borderColor: "rgba(41,50,65,0.16)",
+                  color: "text.primary",
+                }}
+              >
+                Grupal
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
 
-      <br />
+        <Card className="glass-surface lift-on-hover animate-fade-up" sx={{ animationDelay: "90ms" }}>
+          <CardContent>
+            <Box sx={{ textAlign: "center", mb: 2 }}>
+              {!modelsLoaded ? (
+                <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                  <CircularProgress size={18} />
+                  <Typography>Cargando IA...</Typography>
+                </Stack>
+              ) : (
+                <Alert severity="success" sx={{ justifyContent: "center" }}>
+                  Modelos cargados
+                </Alert>
+              )}
+            </Box>
 
-      {!modelsLoaded && <p>Cargando IA...</p>}
+            <Divider sx={{ mb: 3 }} />
 
-      {/* CAMARA */}
-      {(mode === "live" || mode === "single") && (
-        <>
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            width={400}
-          />
+            <Stack spacing={3} alignItems="center">
+              {(mode === "live" || mode === "single") && (
+                <Box
+                  sx={{
+                    width: "100%",
+                    maxWidth: 520,
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    boxShadow: "0 16px 34px rgba(41,50,65,0.16)",
+                  }}
+                >
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    width="100%"
+                    style={{ display: "block", width: "100%", height: "auto" }}
+                  />
+                </Box>
+              )}
 
-          {mode === "single" && (
-            <>
-              <br />
-              <button onClick={captureSingle}>Tomar Foto</button>
-            </>
-          )}
-        </>
-      )}
+              {mode === "single" && (
+                <Button
+                  onClick={captureSingle}
+                  variant="contained"
+                  startIcon={<PhotoCameraIcon />}
+                >
+                  Tomar foto
+                </Button>
+              )}
 
-      {/* GRUPAL */}
-      {mode === "group" && (
-        <>
-          <input type="file" onChange={handleFileChange} />
-          <br /><br />
-          <button onClick={sendGroupImage}>
-            Enviar Foto Grupal
-          </button>
-        </>
-      )}
+              {mode === "live" && (
+                <Button
+                  onClick={detectLive}
+                  variant="contained"
+                  startIcon={<PlayArrowIcon />}
+                >
+                  Analizar ahora
+                </Button>
+              )}
 
-      <br /><br />
-      <h2>{message}</h2>
+              {mode === "group" && (
+                <Stack spacing={2} sx={{ width: "100%", maxWidth: 520 }} alignItems="center">
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    startIcon={<UploadFileIcon />}
+                    sx={{ width: "100%" }}
+                  >
+                    Seleccionar foto grupal
+                    <input type="file" hidden onChange={handleFileChange} />
+                  </Button>
+
+                  <Button
+                    onClick={sendGroupImage}
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<GroupsIcon />}
+                    disabled={!image}
+                    sx={{ width: "100%" }}
+                  >
+                    Enviar foto grupal
+                  </Button>
+                </Stack>
+              )}
+
+              <Typography
+                variant="h6"
+                sx={{
+                  textAlign: "center",
+                  p: 2,
+                  borderRadius: 3,
+                  width: "100%",
+                  background: "rgba(61,90,128,0.08)",
+                  color: "text.primary",
+                }}
+              >
+                {message}
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
     </DashboardLayout>
   );
 }

@@ -6,11 +6,31 @@ import {
   createSection,
   getSectionsByCourse,
 } from "../services/courseService";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Collapse,
+  Divider,
+  Grid,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import { useMemo } from "react";
 
 function Courses() {
   const [courses, setCourses] = useState([]);
   const [sections, setSections] = useState({});
   const [openCourse, setOpenCourse] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [courseName, setCourseName] = useState("");
   const [sectionName, setSectionName] = useState("A");
@@ -18,8 +38,13 @@ function Courses() {
 
   // 🔄 Cargar cursos
   const fetchCourses = async () => {
-    const data = await getCourses();
-    setCourses(Array.isArray(data) ? data : []);
+    try {
+      setError("");
+      const data = await getCourses();
+      setCourses(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message || "No se pudieron cargar los cursos");
+    }
   };
 
   useEffect(() => {
@@ -29,9 +54,16 @@ function Courses() {
   // 📌 Crear curso
   const handleCreateCourse = async (e) => {
     e.preventDefault();
-    await createCourse(courseName);
-    setCourseName("");
-    fetchCourses();
+    try {
+      setLoading(true);
+      await createCourse(courseName);
+      setCourseName("");
+      await fetchCourses();
+    } catch (err) {
+      setError(err.message || "No se pudo crear el curso");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 📌 Crear sección
@@ -43,10 +75,15 @@ function Courses() {
       return;
     }
 
-    await createSection(sectionName, parseInt(selectedCourse));
-    alert("Sección creada");
-
-    loadSections(selectedCourse);
+    try {
+      setLoading(true);
+      await createSection(sectionName, parseInt(selectedCourse));
+      await loadSections(selectedCourse);
+    } catch (err) {
+      setError(err.message || "No se pudo crear la sección");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 🔄 Cargar secciones de un curso
@@ -69,89 +106,147 @@ function Courses() {
     }
   };
 
+  const sectionOptions = useMemo(() => ["A", "B", "C", "D", "E", "F", "G"], []);
+
   return (
     <DashboardLayout>
-      <h1>Cursos</h1>
+      <Box sx={{ display: "grid", gap: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Cursos
+          </Typography>
+          <Typography color="text.secondary">
+            Crea cursos y secciones con una experiencia más limpia y fluida.
+          </Typography>
+        </Box>
 
-      {/* 🔹 Crear Curso */}
-      <h3>Crear Curso</h3>
-      <form onSubmit={handleCreateCourse}>
-        <input
-          type="text"
-          placeholder="Nombre del curso"
-          value={courseName}
-          onChange={(e) => setCourseName(e.target.value)}
-        />
-        <button type="submit">Crear</button>
-      </form>
+        {error ? <Alert severity="error">{error}</Alert> : null}
 
-      <hr />
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Card className="glass-surface lift-on-hover animate-fade-up">
+              <CardContent>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+                  <MenuBookIcon color="primary" />
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                    Crear curso
+                  </Typography>
+                </Stack>
 
-      {/* 🔹 Crear Sección */}
-      <h3>Crear Sección</h3>
-      <form onSubmit={handleCreateSection}>
-        <select
-          value={selectedCourse}
-          onChange={(e) => setSelectedCourse(e.target.value)}
-        >
-          <option value="">Selecciona un curso</option>
-          {courses.map((c) => (
-            <option key={c.course_id} value={c.course_id}>
-              {c.course_name}
-            </option>
-          ))}
-        </select>
+                <Box component="form" onSubmit={handleCreateCourse} sx={{ display: "grid", gap: 2 }}>
+                  <TextField
+                    label="Nombre del curso"
+                    value={courseName}
+                    onChange={(e) => setCourseName(e.target.value)}
+                    fullWidth
+                    required
+                  />
+                  <Button type="submit" variant="contained" startIcon={<AddIcon />} disabled={loading}>
+                    Crear curso
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
 
-        <select
-          value={sectionName}
-          onChange={(e) => setSectionName(e.target.value)}
-        >
-          {["A", "B", "C", "D", "E", "F", "G"].map((letter) => (
-            <option key={letter} value={letter}>
-              Sección {letter}
-            </option>
-          ))}
-        </select>
+          <Grid item xs={12} md={6}>
+            <Card className="glass-surface lift-on-hover animate-fade-up" sx={{ animationDelay: "80ms" }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+                  Crear sección
+                </Typography>
 
-        <button type="submit">Crear Sección</button>
-      </form>
+                <Box component="form" onSubmit={handleCreateSection} sx={{ display: "grid", gap: 2 }}>
+                  <TextField
+                    select
+                    label="Curso"
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    fullWidth
+                    required
+                  >
+                    <MenuItem value="">Selecciona un curso</MenuItem>
+                    {courses.map((c) => (
+                      <MenuItem key={c.course_id} value={c.course_id}>
+                        {c.course_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-      <hr />
+                  <TextField
+                    select
+                    label="Sección"
+                    value={sectionName}
+                    onChange={(e) => setSectionName(e.target.value)}
+                    fullWidth
+                    required
+                  >
+                    {sectionOptions.map((letter) => (
+                      <MenuItem key={letter} value={letter}>
+                        Sección {letter}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-      {/* 🔥 CURSOS + SECCIONES */}
-      <h3>Mis Cursos</h3>
+                  <Button type="submit" variant="contained" color="secondary" startIcon={<AddIcon />} disabled={loading}>
+                    Crear sección
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
 
-      {courses.map((course) => (
-        <div key={course.course_id} style={{ marginBottom: "10px" }}>
-          
-          {/* 📦 Curso */}
-          <div
-            style={{
-              background: "#e2e8f0",
-              padding: "10px",
-              cursor: "pointer",
-            }}
-            onClick={() => handleToggle(course.course_id)}
-          >
-            📦 {course.course_name}
-          </div>
+        <Card className="glass-surface lift-on-hover animate-fade-up" sx={{ animationDelay: "140ms" }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+              Mis cursos
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Haz clic sobre un curso para desplegar sus secciones.
+            </Typography>
 
-          {/* 📂 Secciones */}
-          {openCourse === course.course_id && (
-            <div style={{ marginLeft: "20px", marginTop: "5px" }}>
-              {sections[course.course_id]?.length > 0 ? (
-                sections[course.course_id].map((sec) => (
-                  <div key={sec.section_id}>
-                    ├── Sección {sec.section_name}
-                  </div>
-                ))
-              ) : (
-                <p>No hay secciones</p>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
+            <Divider sx={{ mb: 2 }} />
+
+            <Stack spacing={1.5}>
+              {courses.map((course) => (
+                <Box key={course.course_id}>
+                  <Button
+                    fullWidth
+                    onClick={() => handleToggle(course.course_id)}
+                    endIcon={<ExpandMoreIcon />}
+                    sx={{
+                      justifyContent: "space-between",
+                      background: "rgba(61,90,128,0.08)",
+                      color: "text.primary",
+                      p: 1.7,
+                      borderRadius: 3,
+                    }}
+                  >
+                    {course.course_name}
+                  </Button>
+
+                  <Collapse in={openCourse === course.course_id} timeout={260} unmountOnExit>
+                    <Box sx={{ pl: 2, pt: 1.5 }}>
+                      {sections[course.course_id]?.length > 0 ? (
+                        <Stack spacing={1}>
+                          {sections[course.course_id].map((sec) => (
+                            <Box key={sec.section_id} sx={{ p: 1.2, borderRadius: 2, bgcolor: "rgba(152,193,217,0.20)" }}>
+                              Sección {sec.section_name}
+                            </Box>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Typography color="text.secondary">No hay secciones</Typography>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Box>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
     </DashboardLayout>
   );
 }

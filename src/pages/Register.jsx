@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerRequest } from "../services/authService";
+import { AppBar, Box, Button, Container, Paper, TextField, Toolbar, Typography } from "@mui/material";
+import SchoolIcon from "@mui/icons-material/School";
 
 function Register() {
   const navigate = useNavigate();
@@ -32,43 +34,71 @@ function Register() {
   };
 
   return (
-    <div style={{ padding: "50px" }}>
-      <h2>Registro de Profesor</h2>
+    <Box
+      className="page-shell"
+      sx={{
+        minHeight: "100vh",
+      }}
+    >
+      <AppBar position="static" sx={{ backgroundColor: "#293241", boxShadow: "none" }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <SchoolIcon />
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Asistencia Facial
+            </Typography>
+          </Box>
 
-      <form onSubmit={handleRegister}>
-        <div>
-          <input
-            type="text"
-            name="name"
-            placeholder="Nombre"
-            value={form.name}
-            onChange={handleChange}
-          />
-        </div>
+          <Button color="inherit" onClick={() => navigate("/")}>
+            Volver al login
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-        <div>
-          <input
-            type="email"
-            name="email"
-            placeholder="Correo"
-            value={form.email}
-            onChange={handleChange}
-          />
-        </div>
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Paper className="glass-surface animate-fade-up lift-on-hover" sx={{ p: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Registro de profesor
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+            Crea tu acceso para administrar cursos y asistencia.
+          </Typography>
 
-        <div>
-          <input
-            type="password"
-            name="password"
-            placeholder="Contraseña"
-            value={form.password}
-            onChange={handleChange}
-          />
-        </div>
+          <Box component="form" onSubmit={handleRegister} sx={{ display: "grid", gap: 2 }}>
+            <TextField
+              type="text"
+              name="name"
+              label="Nombre"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
 
-        <button type="submit">Registrarse</button>
-      </form>
-    </div>
+            <TextField
+              type="email"
+              name="email"
+              label="Correo"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+
+            <TextField
+              type="password"
+              name="password"
+              label="Contraseña"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+
+            <Button type="submit" variant="contained" size="large" color="secondary">
+              Registrarse
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
 
