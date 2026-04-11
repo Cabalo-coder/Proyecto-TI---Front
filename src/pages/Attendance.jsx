@@ -229,23 +229,67 @@ function Attendance() {
 
             <Stack spacing={3} alignItems="center">
               {(mode === "live" || mode === "single") && (
-                <Box
-                  sx={{
-                    width: "100%",
-                    maxWidth: 520,
-                    borderRadius: 4,
-                    overflow: "hidden",
-                    boxShadow: "0 16px 34px rgba(41,50,65,0.16)",
-                  }}
+                <Stack
+                  direction={{ xs: "column", lg: "row" }}
+                  spacing={2}
+                  sx={{ width: "100%", justifyContent: "center", alignItems: "stretch" }}
                 >
-                  <Webcam
-                    audio={false}
-                    ref={webcamRef}
-                    screenshotFormat="image/jpeg"
-                    width="100%"
-                    style={{ display: "block", width: "100%", height: "auto" }}
-                  />
-                </Box>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      maxWidth: 520,
+                      borderRadius: 4,
+                      overflow: "hidden",
+                      boxShadow: "0 16px 34px rgba(41,50,65,0.16)",
+                    }}
+                  >
+                    <Webcam
+                      audio={false}
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      width="100%"
+                      style={{ display: "block", width: "100%", height: "100%", minHeight: 280, objectFit: "cover" }}
+                    />
+                  </Box>
+
+                  <Box
+                    className="glass-surface"
+                    sx={{
+                      width: "100%",
+                      maxWidth: { xs: "100%", lg: 340 },
+                      p: 2.2,
+                      borderRadius: 3,
+                      display: "grid",
+                      gap: 1.2,
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                      Guía de posicionamiento
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.4 }}>
+                      Sigue estas recomendaciones para mejorar el reconocimiento:
+                    </Typography>
+
+                    <Typography variant="body2">1. Mantén la espalda recta y la cabeza centrada.</Typography>
+                    <Typography variant="body2">2. Mira directamente a la cámara, sin inclinar el rostro.</Typography>
+                    <Typography variant="body2">3. Mantén una distancia aproximada de 40-70 cm.</Typography>
+                    <Typography variant="body2">4. Usa buena iluminación frontal, evita contraluz.</Typography>
+                    <Typography variant="body2">5. Evita cubrir tu rostro con mano, gorra o cabello.</Typography>
+
+                    <Box
+                      sx={{
+                        mt: 0.8,
+                        p: 1.2,
+                        borderRadius: 2,
+                        bgcolor: "rgba(152,193,217,0.20)",
+                        fontSize: 13,
+                        color: "text.secondary",
+                      }}
+                    >
+                      Consejo: si no te detecta, reajusta la luz y vuelve a intentar.
+                    </Box>
+                  </Box>
+                </Stack>
               )}
 
               {mode === "single" && (
