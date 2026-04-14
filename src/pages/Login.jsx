@@ -168,12 +168,14 @@ function Login() {
               onChange={(e) => setEmail(e.target.value)}
               fullWidth
               required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailOutlinedIcon sx={{ color: "primary.main" }} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailOutlinedIcon sx={{ color: "primary.main" }} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <TextField
@@ -183,12 +185,14 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               fullWidth
               required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlinedIcon sx={{ color: "primary.main" }} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlinedIcon sx={{ color: "primary.main" }} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
 

@@ -18,7 +18,7 @@ function DashboardLayout({ children }) {
         variant="temporary"
         ModalProps={{ keepMounted: true }}
         sx={{ display: { xs: "block", md: "none" } }}
-        PaperProps={{ sx: { width: 260, backgroundColor: "transparent" } }}
+        slotProps={{ paper: { sx: { width: 260, backgroundColor: "transparent" } } }}
       >
         <Sidebar mobile onClose={() => setMobileOpen(false)} />
       </Drawer>

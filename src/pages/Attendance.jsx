@@ -292,7 +292,11 @@ function Attendance() {
           <CardContent>
             <Box sx={{ textAlign: "center", mb: 2 }}>
               {!modelsLoaded ? (
-                <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+                >
                   <CircularProgress size={18} />
                   <Typography>Cargando IA...</Typography>
                 </Stack>
@@ -305,7 +309,7 @@ function Attendance() {
 
             <Divider sx={{ mb: 3 }} />
 
-            <Stack spacing={3} alignItems="center">
+            <Stack spacing={3} sx={{ display: "flex", alignItems: "center" }}>
               {pendingVerification && (
                 <Alert severity="warning" sx={{ width: "100%" }}>
                   <Stack spacing={1.2}>
@@ -331,7 +335,7 @@ function Attendance() {
                 <Stack
                   direction={{ xs: "column", lg: "row" }}
                   spacing={2}
-                  sx={{ width: "100%", justifyContent: "center", alignItems: "stretch" }}
+                  sx={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "stretch" }}
                 >
                   <Box
                     sx={{
@@ -412,7 +416,10 @@ function Attendance() {
               )}
 
               {mode === "group" && (
-                <Stack spacing={2} sx={{ width: "100%", maxWidth: 520 }} alignItems="center">
+                <Stack
+                  spacing={2}
+                  sx={{ width: "100%", maxWidth: 520, display: "flex", alignItems: "center" }}
+                >
                   <Button
                     component="label"
                     variant="outlined"
