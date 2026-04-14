@@ -1,4 +1,4 @@
-export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+export const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const getToken = () => localStorage.getItem("token");
 
@@ -26,11 +26,32 @@ export const apiRequest = async (path, options = {}) => {
 
 	const contentType = res.headers.get("content-type") || "";
 	const isJson = contentType.includes("application/json");
-	const data = isJson ? await res.json() : null;
+	let data = null;
+	let textBody = "";
+
+	if (isJson) {
+		try {
+			data = await res.json();
+		} catch {
+			data = null;
+		}
+	} else {
+		try {
+			textBody = await res.text();
+		} catch {
+			textBody = "";
+		}
+	}
 
 	if (!res.ok || data?.error) {
+		let detail = data?.detail || data?.error || textBody;
+
+		if (Array.isArray(detail)) {
+			detail = detail.map((item) => item?.msg || JSON.stringify(item)).join(" | ");
+		}
+
 		const message =
-			data?.detail || data?.error || `Request failed with status ${res.status}`;
+			detail || `${res.status} ${res.statusText}: request failed on ${path}`;
 		throw new Error(message);
 	}
 

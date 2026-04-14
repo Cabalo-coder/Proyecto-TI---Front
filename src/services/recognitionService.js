@@ -21,6 +21,14 @@ export const recognizeAttendance = async (descriptor) => {
   });
 };
 
+export const markAttendanceByStudent = async (student_id) => {
+  return apiRequest("/attendance/mark", {
+    method: "POST",
+    token: getToken(),
+    body: { student_id },
+  });
+};
+
 
 // ASISTENCIA GRUPAL (IMAGEN)
 

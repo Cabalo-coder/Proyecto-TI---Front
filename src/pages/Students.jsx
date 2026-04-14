@@ -4,6 +4,7 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import {
   createStudent,
   getSections,
+  getTeacherStructure,
 } from "../services/studentService";
 import { uploadFace } from "../services/faceService";
 import {
@@ -37,6 +38,25 @@ function Students() {
   const [success, setSuccess] = useState("");
 
   const webcamRef = useRef(null);
+
+  const collectCarnes = (node, result = new Set()) => {
+    if (!node) return result;
+
+    if (Array.isArray(node)) {
+      node.forEach((item) => collectCarnes(item, result));
+      return result;
+    }
+
+    if (typeof node === "object") {
+      if (typeof node.carne === "string" && node.carne.trim()) {
+        result.add(node.carne.trim());
+      }
+
+      Object.values(node).forEach((value) => collectCarnes(value, result));
+    }
+
+    return result;
+  };
 
   // cargar secciones
   useEffect(() => {
@@ -73,17 +93,30 @@ function Students() {
       return;
     }
 
+    if (!firstName.trim() || !lastName.trim() || !carne.trim()) {
+      setError("Completa nombre, apellido y carné");
+      return;
+    }
+
     if (!file) {
       setError("Debes subir o tomar una foto");
       return;
     }
 
     try {
+      const existingStructure = await getTeacherStructure();
+      const existingCarnes = collectCarnes(existingStructure);
+
+      if (existingCarnes.has(carne.trim())) {
+        setError("El carné ya existe. Usa uno diferente.");
+        return;
+      }
+
       // 🔹 1. Crear estudiante
       const studentData = {
-        first_name: firstName,
-        last_name: lastName,
-        carne: carne,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        carne: carne.trim(),
         section_id: parseInt(sectionId),
       };
 
@@ -109,7 +142,7 @@ function Students() {
       setFile(null);
     } catch (error) {
       console.error(error);
-      setError("Error al registrar estudiante");
+      setError(error?.message || "Error al registrar estudiante");
     }
   };
 

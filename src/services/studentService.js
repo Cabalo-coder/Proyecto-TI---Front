@@ -15,3 +15,9 @@ export const getSections = async () => {
     token: getToken(),
   });
 };
+
+export const getTeacherStructure = async () => {
+  return apiRequest("/students/my-structure", {
+    token: getToken(),
+  });
+};

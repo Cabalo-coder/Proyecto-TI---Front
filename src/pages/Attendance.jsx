@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import * as faceapi from "face-api.js";
 import DashboardLayout from "../components/layout/DashboardLayout";
-import { recognizeAttendance, recognizeGroup } from "../services/recognitionService";
+import {
+  markAttendanceByStudent,
+  recognizeFace,
+  recognizeGroup,
+} from "../services/recognitionService";
 import {
   Alert,
   Box,
@@ -28,6 +32,39 @@ function Attendance() {
   const [message, setMessage] = useState("Cargando modelos...");
   const [processing, setProcessing] = useState(false);
   const [image, setImage] = useState(null);
+  const [pendingVerification, setPendingVerification] = useState(null);
+
+  const buildRecognitionMessage = (res, prefix = "") => {
+    if (!res || typeof res !== "object") {
+      return `${prefix}Sin respuesta del servidor`;
+    }
+
+    if (typeof res.message === "string" && res.message.trim()) {
+      return `${prefix}${res.message}`;
+    }
+
+    if (res.student?.name && res.attendance?.message) {
+      return `${prefix}${res.student.name}: ${res.attendance.message}`;
+    }
+
+    if (Array.isArray(res.recognized)) {
+      if (res.recognized.length === 0) {
+        return `${prefix}No se reconocieron estudiantes`;
+      }
+
+      const names = res.recognized
+        .map((item) => item?.name)
+        .filter((name) => typeof name === "string" && name.trim());
+
+      return `${prefix}${names.length} estudiante(s) reconocido(s): ${names.join(", ")}`;
+    }
+
+    if (res.attendance?.message) {
+      return `${prefix}${res.attendance.message}`;
+    }
+
+    return `${prefix}Resultado recibido`;
+  };
 
   // =============================
   // CARGAR MODELOS
@@ -51,17 +88,64 @@ function Attendance() {
   // MODO EN VIVO (AUTO)
   // =============================
   useEffect(() => {
-    if (!modelsLoaded || mode !== "live") return;
+    if (!modelsLoaded || mode !== "live" || pendingVerification) return;
 
     const interval = setInterval(() => {
       detectLive();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [modelsLoaded, mode]);
+  }, [modelsLoaded, mode, pendingVerification]);
+
+  const verifyIdentity = async (descriptor, sourceLabel = "") => {
+    const res = await recognizeFace(descriptor);
+
+    if (res?.verified && res?.student_id) {
+      setPendingVerification({
+        studentId: res.student_id,
+        name: res.name,
+        confidence: res.confidence,
+        distance: res.distance,
+      });
+
+      setMessage(
+        `${sourceLabel}Verificado: ${res.name}. Confianza ${res.confidence ?? 0}% (distancia ${
+          typeof res.distance === "number" ? res.distance.toFixed(4) : "n/a"
+        }). Confirma para marcar asistencia.`
+      );
+      return;
+    }
+
+    setPendingVerification(null);
+    setMessage(
+      `${sourceLabel}No reconocido. Intenta con mejor luz y el rostro centrado.`
+    );
+  };
+
+  const confirmAttendance = async () => {
+    if (!pendingVerification?.studentId || processing) return;
+
+    setProcessing(true);
+    try {
+      const res = await markAttendanceByStudent(pendingVerification.studentId);
+      const attendanceMsg = res?.attendance?.message || "Asistencia registrada";
+      const name = res?.student?.name || pendingVerification.name;
+      setMessage(`Confirmado: ${name}. ${attendanceMsg}.`);
+      setPendingVerification(null);
+    } catch (err) {
+      console.error(err);
+      setMessage(err?.message || "Error al confirmar asistencia");
+    }
+    setProcessing(false);
+  };
+
+  const cancelVerification = () => {
+    setPendingVerification(null);
+    setMessage("Verificación cancelada. Puedes intentar de nuevo.");
+  };
 
   const detectLive = async () => {
-    if (processing) return;
+    if (processing || pendingVerification) return;
 
     const video = webcamRef.current?.video;
     if (!video) return;
@@ -81,12 +165,10 @@ function Attendance() {
       }
 
       const descriptor = Array.from(detection.descriptor);
-      const res = await recognizeAttendance(descriptor);
-
-      setMessage(` ${res.message}`);
+      await verifyIdentity(descriptor);
     } catch (err) {
       console.error(err);
-      setMessage("Error ");
+      setMessage(err?.message || "Error al reconocer asistencia");
     }
 
     setProcessing(false);
@@ -96,7 +178,7 @@ function Attendance() {
   // FOTO INDIVIDUAL
 
   const captureSingle = async () => {
-    if (processing) return;
+    if (processing || pendingVerification) return;
 
     const screenshot = webcamRef.current.getScreenshot();
     if (!screenshot) return;
@@ -118,12 +200,10 @@ function Attendance() {
       }
 
       const descriptor = Array.from(detection.descriptor);
-      const res = await recognizeAttendance(descriptor);
-
-      setMessage(`📸 ${res.message}`);
+      await verifyIdentity(descriptor, "Foto: ");
     } catch (err) {
       console.error(err);
-      setMessage("Error en foto ");
+      setMessage(err?.message || "Error en reconocimiento por foto");
     }
 
     setProcessing(false);
@@ -143,10 +223,10 @@ function Attendance() {
 
     try {
       const res = await recognizeGroup(image);
-      setMessage(`🧑‍🤝‍🧑 ${res.message}`);
+      setMessage(buildRecognitionMessage(res, "Grupal: "));
     } catch (err) {
       console.error(err);
-      setMessage("Error en grupo ❌");
+      setMessage(err?.message || "Error en reconocimiento grupal");
     }
 
     setProcessing(false);
@@ -172,9 +252,7 @@ function Attendance() {
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={1.5}
-              justifyContent="center"
-              alignItems="center"
-              sx={{ flexWrap: "wrap" }}
+              sx={{ flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}
             >
               <Button
                 variant={mode === "live" ? "contained" : "outlined"}
@@ -228,6 +306,27 @@ function Attendance() {
             <Divider sx={{ mb: 3 }} />
 
             <Stack spacing={3} alignItems="center">
+              {pendingVerification && (
+                <Alert severity="warning" sx={{ width: "100%" }}>
+                  <Stack spacing={1.2}>
+                    <Typography sx={{ fontWeight: 700 }}>
+                      Verificación detectada: {pendingVerification.name}
+                    </Typography>
+                    <Typography variant="body2">
+                      Confianza: {pendingVerification.confidence ?? 0}% | Distancia: {typeof pendingVerification.distance === "number" ? pendingVerification.distance.toFixed(4) : "n/a"}
+                    </Typography>
+                    <Stack direction="row" spacing={1.2}>
+                      <Button variant="contained" size="small" onClick={confirmAttendance}>
+                        Confirmar asistencia
+                      </Button>
+                      <Button variant="outlined" size="small" onClick={cancelVerification}>
+                        Cancelar
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Alert>
+              )}
+
               {(mode === "live" || mode === "single") && (
                 <Stack
                   direction={{ xs: "column", lg: "row" }}
